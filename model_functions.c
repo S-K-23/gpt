@@ -1,6 +1,6 @@
 #include <math.h>
 
-inline void linear_fwd(const float *restrict x, const float *restrict w, int out_size,
+ void linear_fwd(const float *restrict x, const float *restrict w, int out_size,
                        int in_size, float *restrict out)
 {
     for (int r = 0; r < out_size; r++)
@@ -17,7 +17,7 @@ inline void linear_fwd(const float *restrict x, const float *restrict w, int out
     }
 }
 
-inline float rmsnorm_fwd(const float *x, int n, float *out)
+ float rmsnorm_fwd(const float *x, int n, float *out)
 {
     float ms = 0;
 
@@ -34,7 +34,7 @@ inline float rmsnorm_fwd(const float *x, int n, float *out)
     return scale;
 }
 
-inline void softmax_fwd(const float *logits, int n, float *probs)
+ void softmax_fwd(const float *logits, int n, float *probs)
 {
     float max = logits[0];
     for (int i = 0; i < n; i++)
@@ -57,6 +57,6 @@ inline void softmax_fwd(const float *logits, int n, float *probs)
         probs[i] *= inv;
 }
 
-inline void linear_bwd_x (){
-    
+ void linear_bwd_x (){
+
 }
