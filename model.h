@@ -5,6 +5,7 @@
 #define HEAD_DIM ((N_EMBED) / (N_HEAD)) // Head Internal Dim
 #define MLP_DIM (4 * (N_EMBED))         // MLP Expanded Dim
 
+
 // Postional struct describing attention state and buffers for a single token
 typedef struct
 {
