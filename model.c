@@ -33,11 +33,13 @@ static float *adam_m_con[N_LAYER], *adam_v_con[N_LAYER]; //(512, 128)
 
 static int num_params = 0;
 
-static float *make_param(int size, float std) {
-    float *param = (float *) calloc(size, sizeof(float));
+static float *make_param(int size, float std)
+{
+    float *param = (float *)calloc(size, sizeof(float));
     assert(param);
-    
-    for (int i =0; i < size; i++) {
+
+    for (int i = 0; i < size; i++)
+    {
         param[i] = random_gauss(0, std);
     }
 
@@ -45,16 +47,18 @@ static float *make_param(int size, float std) {
     return param;
 }
 
-static float *make_zero_param(int size) {
+static float *make_zero_param(int size)
+{
     float *param = calloc(size, sizeof(float));
     assert(param);
 
-    return (float *) param;
+    return (float *)param;
 }
 
-static void init_params() {
+static void init_params()
+{
     int emb_s = vocab_size * N_EMBED;
-    int pemb_s = CON_WINDOW *  N_EMBED;
+    int pemb_s = CON_WINDOW * N_EMBED;
     int attn_s = N_EMBED * N_EMBED;
     int mlp_s = MLP_DIM * N_EMBED;
 
@@ -73,9 +77,10 @@ static void init_params() {
     adam_m_lm = make_zero_param(emb_s);
     adam_v_lm = make_zero_param(emb_s);
 
-    printf("Loaded Token, Position, and LM Head");
+    printf("Loaded Token, Position, and LM Head\n");
 
-    for (int i = 0; i , N_LAYER; i++) {
+    for (int i = 0; i < N_LAYER; i++)
+    {
         attn_qry[i] = make_param(attn_s, 0.02f);
         d_attn_qry[i] = make_zero_param(attn_s);
         adam_m_qry[i] = make_zero_param(attn_s);
@@ -100,12 +105,28 @@ static void init_params() {
         d_mlp_exp[i] = make_zero_param(mlp_s);
         adam_m_exp[i] = make_zero_param(mlp_s);
         adam_v_exp[i] = make_zero_param(mlp_s);
-    
+
         mlp_con[i] = make_param(mlp_s, 0.02f);
         d_mlp_con[i] = make_zero_param(mlp_s);
         adam_m_con[i] = make_zero_param(mlp_s);
         adam_v_con[i] = make_zero_param(mlp_s);
     }
 
-    printf("Initialized with %d params\n", num_params);
+    printf("Initialized Model with | %d | params\n", num_params);
+}
+
+PosVals saved[CON_WINDOW];                    // Saved Positon Values for Each Token
+float saved_probs[CON_WINDOW][MAX_CHARS + 1]; // Saved Probability Distribution for Each Token
+
+// Key Value(KV) Cache
+float kv_keys[N_LAYER][CON_WINDOW][N_EMBED];
+float kv_vals[N_LAYER][CON_WINDOW][N_EMBED];
+
+float dk_accum[N_LAYER][CON_WINDOW][N_EMBED];
+float dv_accum[N_LAYER][CON_WINDOW][N_EMBED];
+
+int main()
+{
+    init_params();
+    return 0;
 }
