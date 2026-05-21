@@ -1,7 +1,7 @@
 #include <math.h>
 
- void linear_fwd(const float *restrict x, const float *restrict w, int out_size,
-                       int in_size, float *restrict out)
+void linear_fwd(const float *restrict x, const float *restrict w, int out_size,
+                int in_size, float *restrict out)
 {
     for (int r = 0; r < out_size; r++)
     {
@@ -17,7 +17,7 @@
     }
 }
 
- float rmsnorm_fwd(const float *x, int n, float *out)
+float rmsnorm_fwd(const float *x, int n, float *out)
 {
     float ms = 0;
 
@@ -34,7 +34,7 @@
     return scale;
 }
 
- void softmax_fwd(const float *logits, int n, float *probs)
+void softmax_fwd(const float *logits, int n, float *probs)
 {
     float max = logits[0];
     for (int i = 0; i < n; i++)
@@ -57,6 +57,60 @@
         probs[i] *= inv;
 }
 
- void linear_bwd_x (){
+/**
+ * The gradients of the current layer (dx) are increased by the sum of the gradients
+ * in subsequent layer (d_out) * the wieghts of the current layer (w[r * n_in + c])
+ */
+void linear_bwd_x(const float *restrict w, const float *restrict d_out, int n_out,
+                  int n_in, float *restrict dx)
+{
+    for (int c = 0; c < n_in; c++)
+    {
+        float s = 0;
+        for (int r = 0; r < n_out; r++)
+        {
+            s += d_out[r] * w[r * n_in + c];
+        }
 
+        dx[c] += s;
+    }
+}
+
+/**
+ * Accumulates the gradients for the weights matrix (dw) by summing the
+ * gradient error of each neuron (d_out[r]) multiplied by its corresponding
+ * original input element (x[c]).
+ */
+
+void linear_bwd_w(const float *restrict x, const float *restrict d_out, int n_out,
+                  int n_in, float *restrict dw)
+{
+    for (int r = 0; r < n_out; r++)
+    {
+        float dr = d_out[r];
+        float *dwr = dw + r * n_in;
+
+        for (int c = 0; c < n_in; c++)
+        {
+            dwr[c] += dr * x[c];
+        }
+    }
+}
+
+void rmsnorm_bwd(const float *x, float scale, const float *d_out,
+                  int n, float *dx)
+{
+    float dot = 0;
+    for (int i = 0; i < n; i++)
+    {
+        dot += d_out[i] * x[i];
+    }
+
+    float coef = scale * scale * scale / n;
+
+    for (int i = 0; i < n; i++)
+    {
+        dx[i] += scale * d_out[i] - coef * x[i] * dot;
+    }
+    
 }

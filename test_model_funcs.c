@@ -7,6 +7,12 @@ void linear_fwd(const float *restrict x, const float *restrict w, int out_size, 
 float rmsnorm_fwd(const float *x, int n, float *out);
 void softmax_fwd(const float *logits, int n, float *probs);
 
+void linear_bwd_x (const float *restrict w, const float *restrict d_out, int n_out,
+                   int n_in, float *restrict dx) ;
+
+void linear_bwd_w (const float *restrict x, const float *restrict d_out, int n_out,
+                   int n_in, float *restrict dw);
+
 // --- EPSILON FOR FLOATING POINT COMPARISONS ---
 #define EPSILON 1e-5f
 
@@ -120,10 +126,48 @@ void test_softmax_fwd_extreme_negative() {
     assert(fabsf(probs[1] - 0.5f) < EPSILON);
 }
 
+// --- 4. TESTS FOR BACKWARD FUNCTIONS ---
+void test_linear_bwd_x() {
+    // 2x3 Weight Matrix (Flattened row-major)
+    const float w[6] = {1.0f, 2.0f, 3.0f, 
+                        4.0f, 5.0f, 6.0f};
+    const float dout[2] = {0.5f, 2.0f};
+    float dx[3] = {10.0f, 10.0f, 10.0f}; // Seeded with 10 to test accumulation (+=)
+
+    // Expected (dx += W^T @ dout):
+    // dx[0] += (1.0*0.5) + (4.0*2.0) = 0.5 + 8.0 = 8.5  -> New total: 18.5
+    // dx[1] += (2.0*0.5) + (5.0*2.0) = 1.0 + 10.0 = 11.0 -> New total: 21.0
+    // dx[2] += (3.0*0.5) + (6.0*2.0) = 1.5 + 12.0 = 13.5 -> New total: 23.5
+    linear_bwd_x(w, dout, 2, 3, dx);
+
+    assert(fabsf(dx[0] - 18.5f) < EPSILON);
+    assert(fabsf(dx[1] - 21.0f) < EPSILON);
+    assert(fabsf(dx[2] - 23.5f) < EPSILON);
+}
+
+void test_linear_bwd_w() {
+    const float x[3] = {0.5f, 2.0f, -1.0f};
+    const float dout[2] = {2.0f, -3.0f};
+    float dw[6] = {0}; // Initialize to 0
+
+    // Expected (dw += dout @ x^T):
+    // Row 0 (dout[0]=2):   { 2*0.5, 2*2, 2*-1 }   = { 1.0, 4.0, -2.0 }
+    // Row 1 (dout[1]=-3):  { -3*0.5, -3*2, -3*-1 } = { -1.5, -6.0, 3.0 }
+    linear_bwd_w(x, dout, 2, 3, dw);
+
+    assert(fabsf(dw[0] -  1.0f) < EPSILON);
+    assert(fabsf(dw[1] -  4.0f) < EPSILON);
+    assert(fabsf(dw[2] - -2.0f) < EPSILON);
+    assert(fabsf(dw[3] - -1.5f) < EPSILON);
+    assert(fabsf(dw[4] - -6.0f) < EPSILON);
+    assert(fabsf(dw[5] -  3.0f) < EPSILON);
+}
+
+
 
 // --- MAIN TEST RUNNER ---
 int main() {
-    printf("=== STARTING TRANSFORMER LAYER TESTS ===\n");
+    printf("=== STARTING FORWARD TRANSFORMER LAYER TESTS ===\n");
 
     // Linear Forward Tests
     RUN_TEST(test_linear_fwd_basic);
@@ -137,6 +181,11 @@ int main() {
     RUN_TEST(test_softmax_fwd_basic);
     RUN_TEST(test_softmax_fwd_numerical_stability);
     RUN_TEST(test_softmax_fwd_extreme_negative);
+    
+    printf("=== STARTING BACKWARD TRANSFORMER LAYER TESTS ===\n");
+
+    RUN_TEST(test_linear_bwd_x);
+    RUN_TEST(test_linear_bwd_w);
 
     printf("=== ALL TESTS PASSED SUCCESSFULLY ===\n");
     return 0;
