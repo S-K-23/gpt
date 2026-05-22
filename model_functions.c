@@ -1,5 +1,8 @@
 #include <math.h>
 
+/**
+ * Stores the weighted sum of inputs x in the output of each neuron in the layer.
+ */
 void linear_fwd(const float *restrict x, const float *restrict w, int out_size,
                 int in_size, float *restrict out)
 {
