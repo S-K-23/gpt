@@ -11,11 +11,13 @@ static float *wte, *d_wte;
 static float *wpe, *d_wpe;
 static float *lm_head, *d_lm_head;
 
+// Attention Mechanism: QKV + Output
 static float *attn_qry[N_LAYER], *d_attn_qry[N_LAYER]; //(128,32)
 static float *attn_key[N_LAYER], *d_attn_key[N_LAYER]; //(128,32)
 static float *attn_val[N_LAYER], *d_attn_val[N_LAYER]; //(128,32)
 static float *attn_out[N_LAYER], *d_attn_out[N_LAYER]; //(128,128)
 
+// MLP Layers
 static float *mlp_exp[N_LAYER], *d_mlp_exp[N_LAYER]; //(128, 512)
 static float *mlp_con[N_LAYER], *d_mlp_con[N_LAYER]; //(512, 128)
 
@@ -130,7 +132,7 @@ void gpt_forward(int token_id, int pos_id, float *logits_out, PosVals *vals)
 {
     float x[N_EMBED], tmp[MLP_DIM > N_EMBED ? MLP_DIM : N_EMBED];
 
-    //Embed Tokens, Add Positional Encoding
+    // Embed Tokens, Add Positional Encoding
     for (int i = 0; i < N_EMBED; i++)
     {
         x[i] = wte[token_id * N_EMBED + i] + wpe[pos_id * N_EMBED + i];
@@ -184,7 +186,8 @@ void gpt_forward(int token_id, int pos_id, float *logits_out, PosVals *vals)
             float max = attn_logits[0];
             for (int tt = 1; tt < seq_len; tt++)
             {
-                if (attn_logits[tt] > max) max = attn_logits[tt];
+                if (attn_logits[tt] > max)
+                    max = attn_logits[tt];
             }
 
             float sum = 0;
@@ -195,25 +198,26 @@ void gpt_forward(int token_id, int pos_id, float *logits_out, PosVals *vals)
             }
 
             float inv = 1.0f / sum;
-            for(int tt = 0; tt < seq_len; tt++)
+            for (int tt = 0; tt < seq_len; tt++)
             {
                 attn_logits[tt] *= inv;
             }
 
-            for (int tt = 0; tt < seq_len; tt++){
+            for (int tt = 0; tt < seq_len; tt++)
+            {
                 vals->attnw[layer_in][h][tt] = attn_logits[tt];
             }
 
-            // Weighted Sum of values
+            // Compute attention output (Weighted sum of cached values using attention probabilities (logits))
             for (int i = 0; i < HEAD_DIM; i++)
             {
                 float s = 0;
 
-                for(int tt = 0; tt < seq_len; tt++)
+                for (int tt = 0; tt < seq_len; tt++)
                 {
                     s += attn_logits[tt] * kv_vals[layer_in][tt][head_index + i];
                 }
-                attn_o[head_index + i] = s; 
+                attn_o[head_index + i] = s;
             }
         }
 
@@ -221,7 +225,7 @@ void gpt_forward(int token_id, int pos_id, float *logits_out, PosVals *vals)
 
         // Expand Attention Output and Add Residuals
         linear_fwd(attn_o, attn_out[layer_in], N_EMBED, N_EMBED, tmp);
-        for(int i = 0; i < N_EMBED; i++)
+        for (int i = 0; i < N_EMBED; i++)
         {
             x[i] = tmp[i] + vals->x_inp[layer_in][i];
         }
@@ -239,7 +243,7 @@ void gpt_forward(int token_id, int pos_id, float *logits_out, PosVals *vals)
 
         // Squared ReLU Activation After First Layer
         float h2[MLP_DIM];
-        for (int i = 0; i <MLP_DIM; i++)
+        for (int i = 0; i < MLP_DIM; i++)
         {
             h2[i] = h1[i] > 0 ? h1[i] * h1[i] : 0;
         }
@@ -257,7 +261,138 @@ void gpt_forward(int token_id, int pos_id, float *logits_out, PosVals *vals)
     // Final Output Projection to Vocabulary
     memcpy(vals->x_out, x, sizeof(x));
     linear_fwd(x, lm_head, vocab_size, N_EMBED, logits_out);
+}
 
+void gpt_backward(int n, const int *tokens, const int *targets)
+{
+    memset(dk_accum, 0, sizeof(dk_accum));
+    memset(dv_accum, 0, sizeof(dv_accum));
+    float inv_n = 1.0f / n;
+
+    for (int pos = n - 1; pos >= 0; pos--)
+    {
+        PosVals *vals = &saved[pos];
+        int seq_len = pos + 1;
+
+        float dl[MAX_CHARS + 1];
+        for (int i = 1; i < vocab_size; i++)
+        {
+            dl[i] = (saved_probs[pos][i] - (i == targets[pos] ? 1.0f : 0.0f));
+        }
+
+        float dx[N_EMBED];
+        memset(dx, 0, sizeof(dx));
+        linear_bwd_x(lm_head, dl, vocab_size, N_EMBED, dx);
+        linear_bwd_w(vals->x_out, dl, vocab_size, N_EMBED, d_lm_head);
+
+        for (int li = N_LAYER - 1; li >= 0; li--)
+        {
+
+            float d_h2[MLP_DIM];
+            memset(d_h2, 0, sizeof(d_h2));
+            linear_bwd_x(mlp_con[li], dx, N_EMBED, MLP_DIM, d_h2);
+            linear_bwd_w(vals->mlp_post[li], dx, N_EMBED, MLP_DIM, d_mlp_con[li]);
+
+            float d_h1[MLP_DIM];
+            for (int i = 0; i < MLP_DIM; i++)
+            {
+                d_h1[i] = vals->mlp_pre[li][i] > 0 ? 2.0f * vals->mlp_pre[li][i] * d_h2[i] : 0;
+            }
+
+            float d_xn_mlp[N_EMBED];
+            memset(d_xn_mlp, 0, sizeof(d_xn_mlp));
+            linear_bwd_x(mlp_exp[li], d_h1, MLP_DIM, N_EMBED, d_xn_mlp);
+            linear_bwd_w(vals->x_norm_mlp[li], d_h1, MLP_DIM, N_EMBED, d_mlp_exp[li]);
+
+            float d_x_mid[N_EMBED];
+            memset(d_x_mid, 0, sizeof(d_x_mid));
+            rmsnorm_bwd(vals->x_mid[li], vals->rms_scale_mlp[li], d_xn_mlp, N_EMBED, d_x_mid);
+
+            for (int i = 0; i < N_EMBED; i++)
+            {
+                dx[i] += d_x_mid[i];
+            }
+
+            float d_ao[N_EMBED];
+            memset(d_ao, 0, sizeof(d_ao));
+            linear_bwd_x(attn_out[li], dx, N_EMBED, N_EMBED, d_ao);
+            linear_bwd_w(vals->attn_out[li], dx, N_EMBED, N_EMBED, d_attn_out[li]);
+
+            float d_q[N_EMBED];
+            memset(d_q, 0, sizeof(d_q));
+            float scale = 1.0f / sqrt((float)N_EMBED / (float)N_HEAD);
+
+            for (int h = 0; h < N_HEAD; h++)
+            {
+                int hs = h * HEAD_DIM;
+
+                float d_aw[CON_WINDOW];
+                memset(d_aw, 0, sizeof(d_aw));
+
+                for (int j = 0; j < HEAD_DIM; j++)
+                {
+                    for (int tt = 0; tt < seq_len; tt++)
+                    {
+                        d_aw[tt] += d_ao[hs + j] * kv_vals[li][tt][hs + j];
+                        dv_accum[li][tt][hs + j] += vals->attnw[li][h][tt] * d_ao[hs + j];
+                    }
+                }
+
+                float dot = 0;
+                for (int tt = 0; tt < seq_len; tt++)
+                {
+                    dot += d_aw[tt] * vals->attnw[li][h][tt];
+                }
+
+                float d_al[CON_WINDOW];
+                for (int tt = 0; tt < seq_len; tt++)
+                {
+                    d_al[tt] = vals->attnw[li][h][tt] * (d_aw[tt] - dot);
+                }
+
+                for (int tt = 0; tt < seq_len; tt++)
+                {
+                    for (int j = 0; j < HEAD_DIM; j++)
+                    {
+                        d_q[hs + j] += d_al[tt] * kv_keys[li][tt][hs + j] * scale;
+                        dk_accum[li][tt][hs + j] + d_al[tt] * vals->query[li][hs + j] * scale;
+                    }
+                }
+            }
+
+            float d_xn[N_EMBED];
+            memset(d_xn, 0, sizeof(d_xn));
+
+            linear_bwd_x(attn_qry[li], d_q, N_EMBED, N_EMBED, d_xn);
+            linear_bwd_w(vals->x_norm_attn[li], d_q, N_EMBED, N_EMBED, d_attn_qry[li]);
+
+            linear_bwd_x(attn_key[li], dk_accum[li][pos], N_EMBED, N_EMBED, d_xn);
+            linear_bwd_w(vals->x_norm_attn[li], dk_accum[li], N_EMBED, N_EMBED, d_attn_key[li]);
+
+            linear_bwd_x(attn_val[li], dv_accum[li][pos], N_EMBED, N_EMBED, d_xn);
+            linear_bwd_w(vals->x_norm_attn[li], dv_accum[li][pos], N_EMBED, N_EMBED, d_attn_val[li]);
+
+            float d_x_in[N_EMBED];
+            memset(d_x_in, 0, sizeof(d_x_in));
+            rmsnorm_bwd(vals->x_inp[li], vals->rms_scale_attn[li], d_xn, N_EMBED, d_x_in);
+
+            for (int i = 0; i < N_EMBED; i++)
+            {
+                dx[i] = dx[i] * d_x_in[i];
+            }
+        }
+
+        float d_embed[N_EMBED];
+        memset(d_embed, 0, sizeof(d_embed));
+        rmsnorm_bwd(vals->x_emb, vals->rms_scale_init, dx, N_EMBED, d_embed);
+
+        int tk = tokens[pos];
+        for (int i = 0; i < N_EMBED; i++)
+        {
+            d_wte[tk * N_EMBED + i] += d_embed[i];
+            d_wpe[tk * N_EMBED + i] += d_embed[i];
+        }
+    }
 }
 
 int main()
