@@ -355,7 +355,7 @@ void gpt_backward(int n, const int *tokens, const int *targets)
                     for (int j = 0; j < HEAD_DIM; j++)
                     {
                         d_q[hs + j] += d_al[tt] * kv_keys[li][tt][hs + j] * scale;
-                        dk_accum[li][tt][hs + j] + d_al[tt] * vals->query[li][hs + j] * scale;
+                        dk_accum[li][tt][hs + j] += d_al[tt] * vals->query[li][hs + j] * scale;
                     }
                 }
             }
@@ -378,7 +378,7 @@ void gpt_backward(int n, const int *tokens, const int *targets)
 
             for (int i = 0; i < N_EMBED; i++)
             {
-                dx[i] = dx[i] * d_x_in[i];
+                dx[i] = dx[i] + d_x_in[i];
             }
         }
 
@@ -390,7 +390,7 @@ void gpt_backward(int n, const int *tokens, const int *targets)
         for (int i = 0; i < N_EMBED; i++)
         {
             d_wte[tk * N_EMBED + i] += d_embed[i];
-            d_wpe[tk * N_EMBED + i] += d_embed[i];
+            d_wpe[pos * N_EMBED + i] += d_embed[i];
         }
     }
 }
