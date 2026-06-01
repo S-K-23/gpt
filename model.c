@@ -398,16 +398,40 @@ void gpt_backward(int n, const int *tokens, const int *targets)
 void adam_update(float *p, float *g, float *m, float *v, int sz,
                  float lr, float b1, float b2, float eps, int step)
 {
+    float b1c = 1.0f - powf(b1, step + 1);
+    float b2c = 1.0f - powf(b2, step + 1);
 
+    for (int i = 0; i < sz; i++)
+    {
+        m[i] = b1 * m[i] + (1 - b1) * g[i];
+
+        v[i] = b2 * v[i] + (1 - b2) * g[i] * g[i];
+
+        p[i] -= lr * (m[i] / b1c) / (sqrtf(v[i] / b2c) + eps);
+
+        g[i] = 0;
+    }
 }
 
 int weighted_choice(const float *w, int n)
 {
-    
-}
+    float total = 0;
+    for (int i = 0; i < n; i++)
+    {
+        total += w[i];
+    }
 
-int main()
-{
-    init_params();
-    return 0;
+    float r = (float)stand_distro() * total;
+    float c = 0;
+
+    for (int i = 0; i < n; i++)
+    {
+        c += w[i];
+        if (r < c)
+        {
+            return i;
+        }
+    }
+
+    return n - 1;
 }
