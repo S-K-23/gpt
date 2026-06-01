@@ -398,6 +398,11 @@ void gpt_backward(int n, const int *tokens, const int *targets)
 void adam_update(float *p, float *g, float *m, float *v, int sz,
                  float lr, float b1, float b2, float eps, int step)
 {
+
+}
+
+int weighted_choice(const float *w, int n)
+{
     
 }
 
