@@ -30,15 +30,15 @@ void load_data(char *file)
 
         while ((len > 0) && ((line[len - 1] == "\n") || (line[len - 1] == "\r")))
         {
-            line[len - 1] = 0;
+            line[--len] = 0;
         }
 
         if (len > 0)
         {
             strncpy(docs[curr_doc_count], line, MAX_DOC_LEN - 1);
-            docs[curr_doc_count][MAX_DOC_LEN] = 0;
+            docs[curr_doc_count][MAX_DOC_LEN - 1] = 0;
+            curr_doc_count++;
         }
-        curr_doc_count++;
     }
 
     fclose(fp);

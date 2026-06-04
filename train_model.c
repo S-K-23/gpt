@@ -4,8 +4,6 @@
 
 #include "model.c"
 
-#include "character_tokenizer.c"
-
 void train (int steps) {
     float l_rate = 1e-3f;
     float beta1 = 0.9f;
@@ -16,7 +14,7 @@ void train (int steps) {
     {
         char *doc = docs[s % curr_doc_count];
         int doc_len = (int)strlen(doc);
-        
+
 
     }
 }

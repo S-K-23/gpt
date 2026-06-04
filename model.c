@@ -277,7 +277,7 @@ void gpt_backward(int n, const int *tokens, const int *targets)
         float dl[MAX_CHARS + 1];
         for (int i = 1; i < vocab_size; i++)
         {
-            dl[i] = (saved_probs[pos][i] - (i == targets[pos] ? 1.0f : 0.0f));
+            dl[i] = (saved_probs[pos][i] - (i == targets[pos] ? 1.0f : 0.0f)) * inv_n;
         }
 
         float dx[N_EMBED];
@@ -367,7 +367,7 @@ void gpt_backward(int n, const int *tokens, const int *targets)
             linear_bwd_w(vals->x_norm_attn[li], d_q, N_EMBED, N_EMBED, d_attn_qry[li]);
 
             linear_bwd_x(attn_key[li], dk_accum[li][pos], N_EMBED, N_EMBED, d_xn);
-            linear_bwd_w(vals->x_norm_attn[li], dk_accum[li], N_EMBED, N_EMBED, d_attn_key[li]);
+            linear_bwd_w(vals->x_norm_attn[li], dk_accum[li][pos], N_EMBED, N_EMBED, d_attn_key[li]);
 
             linear_bwd_x(attn_val[li], dv_accum[li][pos], N_EMBED, N_EMBED, d_xn);
             linear_bwd_w(vals->x_norm_attn[li], dv_accum[li][pos], N_EMBED, N_EMBED, d_attn_val[li]);
