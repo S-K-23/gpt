@@ -7,5 +7,5 @@
 #endif
 
 #ifndef MAX_CHARS
-#define MAX_CHARS 50
+#define MAX_CHARS 256
 #endif

@@ -130,6 +130,7 @@ float dv_accum[N_LAYER][CON_WINDOW][N_EMBED];
 
 void gpt_forward(int token_id, int pos_id, float *logits_out, PosVals *vals)
 {
+    assert(token_id >= 0 && token_id < vocab_size);
     float x[N_EMBED], tmp[MLP_DIM > N_EMBED ? MLP_DIM : N_EMBED];
 
     // Embed Tokens, Add Positional Encoding
@@ -274,8 +275,8 @@ void gpt_backward(int n, const int *tokens, const int *targets)
         PosVals *vals = &saved[pos];
         int seq_len = pos + 1;
 
-        float dl[MAX_CHARS + 1];
-        for (int i = 1; i < vocab_size; i++)
+        float dl[vocab_size];
+        for (int i = 0; i < vocab_size; i++)
         {
             dl[i] = (saved_probs[pos][i] - (i == targets[pos] ? 1.0f : 0.0f)) * inv_n;
         }
@@ -387,6 +388,7 @@ void gpt_backward(int n, const int *tokens, const int *targets)
         rmsnorm_bwd(vals->x_emb, vals->rms_scale_init, dx, N_EMBED, d_embed);
 
         int tk = tokens[pos];
+        assert(tk >= 0 && tk < vocab_size);
         for (int i = 0; i < N_EMBED; i++)
         {
             d_wte[tk * N_EMBED + i] += d_embed[i];

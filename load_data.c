@@ -28,7 +28,7 @@ void load_data(char *file)
 
         int len = (int)strlen(line);
 
-        while ((len > 0) && ((line[len - 1] == "\n") || (line[len - 1] == "\r")))
+        while ((len > 0) && ((line[len - 1] == '\n') || (line[len - 1] == '\r')))
         {
             line[--len] = 0;
         }

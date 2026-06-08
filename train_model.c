@@ -103,13 +103,13 @@ void inference(float temp)
             {
                 sample[slen++] = uniq_char_arr[token_id];
             }
-
-            sample[slen] = '\0';
-            printf("sample %2d: %s\n", si + 1, sample);
-
-            memset(kv_keys, 0, sizeof(kv_keys));
-            memset(kv_vals, 0, sizeof(kv_vals));
         }
+
+        sample[slen] = '\0';
+        printf("sample %2d: %s\n", si + 1, sample);
+
+        memset(kv_keys, 0, sizeof(kv_keys));
+        memset(kv_vals, 0, sizeof(kv_vals));
     }
 }
 
@@ -186,7 +186,7 @@ int main()
 
     init_params();
 
-    int num_steps = 5000;
+    int num_steps = 50000;
     train(num_steps);
 
     printf("=================================\n");
