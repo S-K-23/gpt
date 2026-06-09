@@ -6,10 +6,11 @@
 
 void train(int steps)
 {
-    float l_rate = 1e-3f;
+    float l_rate = 1e-3f;   
     float beta1 = 0.9f;
-    float beta2 = 0.95f;
+    float beta2 = 0.95f;    
     float epsilon = 1e-8f;
+    int warmup_steps = 500; 
 
     for (int s = 0; s < steps; s++)
     {
@@ -48,7 +49,14 @@ void train(int steps)
         // Backprop
         gpt_backward(n, tokens, targets);
 
-        float lr_t = l_rate * 0.5f * (1.0f + cosf((float)M_PI * s / (float)steps));
+        // Learning rate with warmup then cosine decay
+        float lr_t;
+        if (s < warmup_steps) {
+            lr_t = l_rate * (s + 1) / warmup_steps;
+        } else {
+            float progress = (float)(s - warmup_steps) / (float)(steps - warmup_steps);
+            lr_t = l_rate * (0.1f + 0.9f * 0.5f * (1.0f + cosf((float)M_PI * progress)));
+        }
 
         int es = vocab_size * N_EMBED;
         int ps = CON_WINDOW * N_EMBED;
@@ -70,7 +78,10 @@ void train(int steps)
             adam_update(mlp_con[i], d_mlp_con[i], adam_m_con[i], adam_v_con[i], ms, lr_t, beta1, beta2, epsilon, s);
         }
 
-        printf("Step %4d / %4d | loss %.4f\n", s + 1, steps, loss);
+        // Print every 500 steps
+        if ((s + 1) % 500 == 0 || s == 0) {
+            printf("Step %5d / %5d | loss %.4f | lr %.2e\n", s + 1, steps, loss, lr_t);
+        }
     }
 }
 
@@ -159,6 +170,8 @@ void free_params(void)
 
 int main()
 {
+    setvbuf(stdout, NULL, _IONBF, 0);
+
     load_data("input.txt");
 
     int *doc_order = (int *)malloc(curr_doc_count * sizeof(int));

@@ -1,21 +1,128 @@
+Number of Docs: 32777
+=================================
+Vocab Size: 65
+Loaded Token, Position, and LM Head
+Initialized Model with | 6341120 | params
+Step     1 / 50000 | loss 4.1708 | lr 2.00e-06
+Step   500 / 50000 | loss 2.7769 | lr 1.00e-03
+Step  1000 / 50000 | loss 3.0157 | lr 1.00e-03
+Step  1500 / 50000 | loss 1.8283 | lr 9.99e-04
+Step  2000 / 50000 | loss 2.6885 | lr 9.98e-04
+Step  2500 / 50000 | loss 2.3509 | lr 9.96e-04
+Step  3000 / 50000 | loss 2.4024 | lr 9.94e-04
+Step  3500 / 50000 | loss 2.6158 | lr 9.92e-04
+Step  4000 / 50000 | loss 1.8155 | lr 9.89e-04
+Step  4500 / 50000 | loss 2.5410 | lr 9.86e-04
+Step  5000 / 50000 | loss 2.5601 | lr 9.82e-04
+Step  5500 / 50000 | loss 2.9578 | lr 9.78e-04
+Step  6000 / 50000 | loss 2.4896 | lr 9.73e-04
+Step  6500 / 50000 | loss 2.5112 | lr 9.68e-04
+Step  7000 / 50000 | loss 2.0387 | lr 9.62e-04
+Step  7500 / 50000 | loss 2.3004 | lr 9.56e-04
+Step  8000 / 50000 | loss 0.3271 | lr 9.50e-04
+Step  8500 / 50000 | loss 2.3928 | lr 9.43e-04
+Step  9000 / 50000 | loss 2.5045 | lr 9.36e-04
+Step  9500 / 50000 | loss 1.9151 | lr 9.29e-04
+Step 10000 / 50000 | loss 2.1627 | lr 9.21e-04
+Step 10500 / 50000 | loss 3.6326 | lr 9.12e-04
+Step 11000 / 50000 | loss 2.3033 | lr 9.04e-04
+Step 11500 / 50000 | loss 2.5967 | lr 8.95e-04
+Step 12000 / 50000 | loss 3.3585 | lr 8.85e-04
+Step 12500 / 50000 | loss 0.7222 | lr 8.76e-04
+Step 13000 / 50000 | loss 2.4499 | lr 8.66e-04
+Step 13500 / 50000 | loss 1.9030 | lr 8.55e-04
+Step 14000 / 50000 | loss 2.0635 | lr 8.45e-04
+Step 14500 / 50000 | loss 2.2133 | lr 8.34e-04
+Step 15000 / 50000 | loss 2.2819 | lr 8.23e-04
+Step 15500 / 50000 | loss 2.2003 | lr 8.11e-04
+Step 16000 / 50000 | loss 2.1883 | lr 7.99e-04
+Step 16500 / 50000 | loss 2.9169 | lr 7.87e-04
+Step 17000 / 50000 | loss 1.5481 | lr 7.75e-04
+Step 17500 / 50000 | loss 1.7210 | lr 7.63e-04
+Step 18000 / 50000 | loss 0.5131 | lr 7.50e-04
+Step 18500 / 50000 | loss 0.5725 | lr 7.37e-04
+Step 19000 / 50000 | loss 1.8765 | lr 7.24e-04
+Step 19500 / 50000 | loss 1.6869 | lr 7.11e-04
+Step 20000 / 50000 | loss 2.2083 | lr 6.97e-04
+Step 20500 / 50000 | loss 2.1512 | lr 6.84e-04
+Step 21000 / 50000 | loss 0.9994 | lr 6.70e-04
+Step 21500 / 50000 | loss 1.7725 | lr 6.56e-04
+Step 22000 / 50000 | loss 0.8278 | lr 6.42e-04
+Step 22500 / 50000 | loss 0.7536 | lr 6.28e-04
+Step 23000 / 50000 | loss 2.1595 | lr 6.14e-04
+Step 23500 / 50000 | loss 2.0923 | lr 6.00e-04
+Step 24000 / 50000 | loss 2.2003 | lr 5.86e-04
+Step 24500 / 50000 | loss 1.9062 | lr 5.71e-04
+Step 25000 / 50000 | loss 1.9286 | lr 5.57e-04
+Step 25500 / 50000 | loss 0.7653 | lr 5.43e-04
+Step 26000 / 50000 | loss 2.6139 | lr 5.29e-04
+Step 26500 / 50000 | loss 2.5547 | lr 5.14e-04
+Step 27000 / 50000 | loss 2.1163 | lr 5.00e-04
+Step 27500 / 50000 | loss 2.1745 | lr 4.86e-04
+Step 28000 / 50000 | loss 2.0151 | lr 4.72e-04
+Step 28500 / 50000 | loss 1.9331 | lr 4.58e-04
+Step 29000 / 50000 | loss 2.0932 | lr 4.44e-04
+Step 29500 / 50000 | loss 2.1686 | lr 4.30e-04
+Step 30000 / 50000 | loss 1.8569 | lr 4.16e-04
+Step 30500 / 50000 | loss 1.9906 | lr 4.03e-04
+Step 31000 / 50000 | loss 1.8664 | lr 3.89e-04
+Step 31500 / 50000 | loss 2.2741 | lr 3.76e-04
+Step 32000 / 50000 | loss 2.0374 | lr 3.63e-04
+Step 32500 / 50000 | loss 2.0246 | lr 3.50e-04
+Step 33000 / 50000 | loss 2.2861 | lr 3.38e-04
+Step 33500 / 50000 | loss 0.6672 | lr 3.25e-04
+Step 34000 / 50000 | loss 1.4381 | lr 3.13e-04
+Step 34500 / 50000 | loss 2.7973 | lr 3.01e-04
+Step 35000 / 50000 | loss 0.3730 | lr 2.89e-04
+Step 35500 / 50000 | loss 1.7981 | lr 2.77e-04
+Step 36000 / 50000 | loss 1.7588 | lr 2.66e-04
+Step 36500 / 50000 | loss 0.6326 | lr 2.55e-04
+Step 37000 / 50000 | loss 2.5323 | lr 2.45e-04
+Step 37500 / 50000 | loss 2.0339 | lr 2.34e-04
+Step 38000 / 50000 | loss 0.7618 | lr 2.24e-04
+Step 38500 / 50000 | loss 0.6196 | lr 2.15e-04
+Step 39000 / 50000 | loss 2.0197 | lr 2.05e-04
+Step 39500 / 50000 | loss 0.5002 | lr 1.96e-04
+Step 40000 / 50000 | loss 2.3192 | lr 1.88e-04
+Step 40500 / 50000 | loss 0.9420 | lr 1.79e-04
+Step 41000 / 50000 | loss 1.7237 | lr 1.71e-04
+Step 41500 / 50000 | loss 2.0513 | lr 1.64e-04
+Step 42000 / 50000 | loss 0.7555 | lr 1.57e-04
+Step 42500 / 50000 | loss 1.9188 | lr 1.50e-04
+Step 43000 / 50000 | loss 1.9672 | lr 1.44e-04
+Step 43500 / 50000 | loss 1.8486 | lr 1.38e-04
+Step 44000 / 50000 | loss 1.7184 | lr 1.32e-04
+Step 44500 / 50000 | loss 2.4480 | lr 1.27e-04
+Step 45000 / 50000 | loss 2.1107 | lr 1.22e-04
+Step 45500 / 50000 | loss 1.7051 | lr 1.18e-04
+Step 46000 / 50000 | loss 0.8189 | lr 1.14e-04
+Step 46500 / 50000 | loss 1.7553 | lr 1.11e-04
+Step 47000 / 50000 | loss 1.9627 | lr 1.08e-04
+Step 47500 / 50000 | loss 1.8026 | lr 1.06e-04
+Step 48000 / 50000 | loss 1.7748 | lr 1.04e-04
+Step 48500 / 50000 | loss 1.6203 | lr 1.02e-04
+Step 49000 / 50000 | loss 2.1873 | lr 1.01e-04
+Step 49500 / 50000 | loss 2.4390 | lr 1.00e-04
+Step 50000 / 50000 | loss 2.1667 | lr 1.00e-04
+=================================
 Inference
-sample  1: O bas, thou the with dall our parde lit;
-sample  2: Not an, the make my heave and a mund the to
-sample  3: - Re, t ganst:
-sample  4: I thould there sit your be this and thea therd
-sample  5: O fome prost and pust this loth im the treir
-sample  6: And is up thou furatuld ind he wit but there
-sample  7: And me make frould han proth the this deand aind,
-sample  8: Be to he supard apy to him have mink, meat,
-sample  9: ,o that this be the ould but the the lost ald towe
-sample 10: Sheer not the sid digeser prom, with as me
-sample 11: you, my shat weath I morte have swall it preMstame
-sample 12: DUKE VINCENTIO:
-sample 13: LEONTES:
-sample 14: DUKE VINCENTIO:
-sample 15: That not the comer I come he saral the with has t
-sample 16: To have now lord of ucent us the have lor morsed,
-sample 17: Both the dould the this have I and and with
-sample 18: MENENIUS:
-sample 19: Ay, Mar the I seray tou make the the har mackent
-sample 20: Whe his not pret to of tor ma and heart in na fon
+sample  1: And like to me, good to speect to ming,
+sample  2: Whay sall the with him surnse
+sample  3: Fo what leth beson to the rest too me thee.
+sample  4: Thouss in treages and the much to it ame:
+sample  5: CATESBY:
+sample  6: Be af are to thee, and the dad too deie.
+sample  7: I wo hat to grace a good it to deater;
+sample  8: Seecond and I see, that that he both thous housthe
+sample  9: That my feart, what I the dest welpon suspeme,
+sample 10: CAMILLO:
+sample 11: So heper what our natus be thous that tok;
+sample 12: Beas the come wordan! All that that of toy,
+sample 13: Second Murdererer:
+sample 14: Do mo conto to you besed, would himseld I don.
+sample 15: is what the noth.
+sample 16: The many, the lave not bost mothing painss.
+sample 17: Come wordld so praigent.
+sample 18: MERCUTIO:
+sample 19: COMINIUS:
+sample 20: Serome with spint with to counterss the wout,
