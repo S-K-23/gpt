@@ -3,7 +3,6 @@ CFLAGS  = -Wall -O3 -march=native -ffast-math
 LDFLAGS = -lm
 OUT     = gpt
 
-# Default to the single-threaded build.
 .DEFAULT_GOAL := single
 
 single:
