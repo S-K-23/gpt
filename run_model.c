@@ -1,18 +1,21 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <strings.h>
+#include <assert.h>
 
 #include "model.c"
 
-void train(int steps)
+void train(int warmup_steps, int training_steps)
 {
-    float l_rate = 1e-3f;   
-    float beta1 = 0.9f;
-    float beta2 = 0.95f;    
-    float epsilon = 1e-8f;
-    int warmup_steps = 500; 
+    assert(warmup_steps >= 0);
+    assert(training_steps >= 0);
 
-    for (int s = 0; s < steps; s++)
+    float l_rate = 1e-3f;
+    float beta1 = 0.9f;
+    float beta2 = 0.95f;
+    float epsilon = 1e-8f;
+
+    for (int s = 0; s < training_steps; s++)
     {
         // Tokenize
         char *doc = docs[s % curr_doc_count];
@@ -51,10 +54,13 @@ void train(int steps)
 
         // Learning rate with warmup then cosine decay
         float lr_t;
-        if (s < warmup_steps) {
+        if (s < warmup_steps)
+        {
             lr_t = l_rate * (s + 1) / warmup_steps;
-        } else {
-            float progress = (float)(s - warmup_steps) / (float)(steps - warmup_steps);
+        }
+        else
+        {
+            float progress = (float)(s - warmup_steps) / (float)(training_steps - warmup_steps);
             lr_t = l_rate * (0.1f + 0.9f * 0.5f * (1.0f + cosf((float)M_PI * progress)));
         }
 
@@ -79,8 +85,9 @@ void train(int steps)
         }
 
         // Print every 500 steps
-        if ((s + 1) % 500 == 0 || s == 0) {
-            printf("Step %5d / %5d | loss %.4f | lr %.2e\n", s + 1, steps, loss, lr_t);
+        if ((s + 1) % 500 == 0 || s == 0)
+        {
+            printf("Step %5d / %5d | loss %.4f | lr %.2e\n", s + 1, training_steps, loss, lr_t);
         }
     }
 }
@@ -126,6 +133,7 @@ void inference(float temp)
 
 void free_params(void)
 {
+
     free(wte);
     free(d_wte);
     free(adam_m_wte);
@@ -168,11 +176,20 @@ void free_params(void)
     }
 }
 
-int main()
+int run(char *training_data, int training_steps, int warmup_steps,  float temperature, char *model_save_path, char *saved_model_bin)
 {
+    assert(training_data);
     setvbuf(stdout, NULL, _IONBF, 0);
 
-    load_data("input.txt");
+    if (fopen(training_data, "r"))
+    {
+        load_data(training_data);
+    }
+    else
+    {
+        printf("Error loading traing data");
+        return -1;
+    }
 
     int *doc_order = (int *)malloc(curr_doc_count * sizeof(int));
 
@@ -197,16 +214,42 @@ int main()
     printf("=================================\n");
     printf("Vocab Size: %d\n", vocab_size);
 
-    init_params();
-
-    int num_steps = 50000;
-    train(num_steps);
+    if (!saved_model_bin)
+        init_params();
+    else
+    {    
+        load_model_binary(saved_model_bin);
+        printf("Loaded Model from %s\n", saved_model_bin);
+    }
 
     printf("=================================\n");
-    printf("Inference\n");
-    float temperature = 0.6f;
+    train(warmup_steps, training_steps);
+
+    printf("=================================\n");
+    printf("Inference:\n");
     inference(temperature);
 
+    if (model_save_path)
+    {
+        printf("=================================\n");
+        save_model_binary(model_save_path);
+        printf("Saved model to: %s\n", model_save_path);
+    }
+
     free_params();
+    return 0;
+}
+
+int main()
+{
+    char *input = "input.txt";
+    char *save_path = "saved_model.bin";
+    char *saved_model_binary = NULL;
+    int warmup = 500;
+    int steps = 100000;
+    float temp = 0.6f;
+
+
+    run(input, steps, warmup, temp, save_path, saved_model_binary);
     return 0;
 }

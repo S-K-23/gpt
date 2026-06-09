@@ -1,10 +1,11 @@
 #include <stdlib.h>
 #include <assert.h>
+#include <stdio.h>
 
 #include "model.h"
 #include "random.c"
 #include "character_tokenizer.c"
-#include "model_functions.c"
+#include "model_internal_functions.c"
 
 // Token + Position Embeddings
 static float *wte, *d_wte;
@@ -436,4 +437,120 @@ int weighted_choice(const float *w, int n)
     }
 
     return n - 1;
+}
+
+void save_model_binary(char *fname)
+{
+    FILE *fp = fopen(fname, "wb");
+    assert(fp);
+
+    int header[7] = {N_EMBED, N_HEAD, N_LAYER, CON_WINDOW, HEAD_DIM, MLP_DIM, vocab_size};
+    fwrite(header, sizeof(header), 1, fp);
+
+    int emb_s = vocab_size * N_EMBED;
+    int pemb_s = CON_WINDOW * N_EMBED;
+    int attn_s = N_EMBED * N_EMBED;
+    int mlp_s = MLP_DIM * N_EMBED;
+
+    fwrite(wte, sizeof(float), emb_s, fp);
+    fwrite(adam_m_wte, sizeof(float), emb_s, fp);
+    fwrite(adam_v_wte, sizeof(float), emb_s, fp);
+
+    fwrite(wpe, sizeof(float), pemb_s, fp);
+    fwrite(adam_m_wpe, sizeof(float), pemb_s, fp);
+    fwrite(adam_v_wpe, sizeof(float), pemb_s, fp);
+
+    fwrite(lm_head, sizeof(float), emb_s, fp);
+    fwrite(adam_m_lm, sizeof(float), emb_s, fp);
+    fwrite(adam_v_lm, sizeof(float), emb_s, fp);
+
+    for (int i = 0; i < N_LAYER; i++)
+    {
+        fwrite(attn_qry[i], sizeof(float), attn_s, fp);
+        fwrite(adam_m_qry[i], sizeof(float), attn_s, fp);
+        fwrite(adam_v_qry[i], sizeof(float), attn_s, fp);
+
+        fwrite(attn_key[i], sizeof(float), attn_s, fp);
+        fwrite(adam_m_key[i], sizeof(float), attn_s, fp);
+        fwrite(adam_v_key[i], sizeof(float), attn_s, fp);
+
+        fwrite(attn_val[i], sizeof(float), attn_s, fp);
+        fwrite(adam_m_val[i], sizeof(float), attn_s, fp);
+        fwrite(adam_v_val[i], sizeof(float), attn_s, fp);
+
+        fwrite(attn_out[i], sizeof(float), attn_s, fp);
+        fwrite(adam_m_out[i], sizeof(float), attn_s, fp);
+        fwrite(adam_v_out[i], sizeof(float), attn_s, fp);
+
+        fwrite(mlp_exp[i], sizeof(float), mlp_s, fp);
+        fwrite(adam_m_exp[i], sizeof(float), mlp_s, fp);
+        fwrite(adam_v_exp[i], sizeof(float), mlp_s, fp);
+
+        fwrite(mlp_con[i], sizeof(float), mlp_s, fp);
+        fwrite(adam_m_con[i], sizeof(float), mlp_s, fp);
+        fwrite(adam_v_con[i], sizeof(float), mlp_s, fp);
+    }
+
+    fclose(fp);
+}
+
+void load_model_binary(char *fname)
+{
+    int emb_s = vocab_size * N_EMBED;
+    int pemb_s = CON_WINDOW * N_EMBED;
+    int attn_s = N_EMBED * N_EMBED;
+    int mlp_s = MLP_DIM * N_EMBED;
+
+    wte = make_param(emb_s, 0.02f);
+    d_wte = make_zero_param(emb_s);
+    adam_m_wte = make_zero_param(emb_s);
+    adam_v_wte = make_zero_param(emb_s);
+
+    wpe = make_param(pemb_s, 0.02f);
+    d_wpe = make_zero_param(pemb_s);
+    adam_m_wpe = make_zero_param(pemb_s);
+    adam_v_wpe = make_zero_param(pemb_s);
+
+    lm_head = make_param(emb_s, 0.02f);
+    d_lm_head = make_zero_param(emb_s);
+    adam_m_lm = make_zero_param(emb_s);
+    adam_v_lm = make_zero_param(emb_s);
+
+    printf("Loaded Token, Position, and LM Head\n");
+
+    for (int i = 0; i < N_LAYER; i++)
+    {
+        attn_qry[i] = make_param(attn_s, 0.02f);
+        d_attn_qry[i] = make_zero_param(attn_s);
+        adam_m_qry[i] = make_zero_param(attn_s);
+        adam_v_qry[i] = make_zero_param(attn_s);
+
+        attn_key[i] = make_param(attn_s, 0.02f);
+        d_attn_key[i] = make_zero_param(attn_s);
+        adam_m_key[i] = make_zero_param(attn_s);
+        adam_v_key[i] = make_zero_param(attn_s);
+
+        attn_val[i] = make_param(attn_s, 0.02f);
+        d_attn_val[i] = make_zero_param(attn_s);
+        adam_m_val[i] = make_zero_param(attn_s);
+        adam_v_val[i] = make_zero_param(attn_s);
+
+        attn_out[i] = make_param(attn_s, 0.02f);
+        d_attn_out[i] = make_zero_param(attn_s);
+        adam_m_out[i] = make_zero_param(attn_s);
+        adam_v_out[i] = make_zero_param(attn_s);
+
+        mlp_exp[i] = make_param(mlp_s, 0.02f);
+        d_mlp_exp[i] = make_zero_param(mlp_s);
+        adam_m_exp[i] = make_zero_param(mlp_s);
+        adam_v_exp[i] = make_zero_param(mlp_s);
+
+        mlp_con[i] = make_param(mlp_s, 0.02f);
+        d_mlp_con[i] = make_zero_param(mlp_s);
+        adam_m_con[i] = make_zero_param(mlp_s);
+        adam_v_con[i] = make_zero_param(mlp_s);
+    }
+
+    printf("Initialized Model with | %d | params\n", num_params);
+
 }
