@@ -1,6 +1,6 @@
-#define N_EMBED 512                     // Embed Dim
-#define N_HEAD 8                        // Attn Heads
-#define N_LAYER 8                       // Transformer Layers
+#define N_EMBED 256                     // Embed Dim
+#define N_HEAD 12                       // Attn Heads
+#define N_LAYER 24                      // Transformer Layers
 #define CON_WINDOW 64                   // Sequence Length
 #define HEAD_DIM ((N_EMBED) / (N_HEAD)) // Head Internal Dim
 #define MLP_DIM (4 * (N_EMBED))         // MLP Expanded Dim

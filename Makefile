@@ -1,0 +1,16 @@
+CC      = gcc
+CFLAGS  = -Wall -O3 -march=native -ffast-math
+LDFLAGS = -lm
+OUT     = gpt
+
+# Default to the single-threaded build.
+.DEFAULT_GOAL := single
+
+single:
+	$(CC) $(CFLAGS) run_model.c -o $(OUT) $(LDFLAGS)
+
+
+clean:
+	rm -f $(OUT)
+
+.PHONY: single multi clean
