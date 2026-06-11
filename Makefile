@@ -8,6 +8,8 @@ OUT     = gpt
 single:
 	$(CC) $(CFLAGS) run_model.c -o $(OUT) $(LDFLAGS)
 
+multi:
+	$(CC) $(CFLAGS) train_parallel.c -o $(OUT) $(LDFLAGS) -pthread
 
 clean:
 	rm -f $(OUT)
