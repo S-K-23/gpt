@@ -494,8 +494,14 @@ void save_model_binary(char *fname)
     fclose(fp);
 }
 
-void load_model_binary(char *fname)
-{
+void load_model_binary(char *fname) {
+    FILE *fp = fopen(fname, "rb");
+    assert(fp);
+
+    int header[7];
+    fread(header, sizeof(header), 1, fp);
+    
+
     int emb_s = vocab_size * N_EMBED;
     int pemb_s = CON_WINDOW * N_EMBED;
     int attn_s = N_EMBED * N_EMBED;
@@ -516,10 +522,23 @@ void load_model_binary(char *fname)
     adam_m_lm = make_zero_param(emb_s);
     adam_v_lm = make_zero_param(emb_s);
 
+    fread(wte, sizeof(float), emb_s, fp);
+    fread(adam_m_wte, sizeof(float), emb_s, fp);
+    fread(adam_v_wte, sizeof(float), emb_s, fp);
+
+    fread(wpe, sizeof(float), pemb_s, fp);
+    fread(adam_m_wpe, sizeof(float), pemb_s, fp);
+    fread(adam_v_wpe, sizeof(float), pemb_s, fp);
+
+    fread(lm_head, sizeof(float), emb_s, fp);
+    fread(adam_m_lm, sizeof(float), emb_s, fp);
+    fread(adam_v_lm, sizeof(float), emb_s, fp);
+
     printf("Loaded Token, Position, and LM Head\n");
 
     for (int i = 0; i < N_LAYER; i++)
     {
+        // Allocation
         attn_qry[i] = make_param(attn_s, 0.02f);
         d_attn_qry[i] = make_zero_param(attn_s);
         adam_m_qry[i] = make_zero_param(attn_s);
@@ -549,8 +568,40 @@ void load_model_binary(char *fname)
         d_mlp_con[i] = make_zero_param(mlp_s);
         adam_m_con[i] = make_zero_param(mlp_s);
         adam_v_con[i] = make_zero_param(mlp_s);
+
+        // Reading data
+        fread(attn_qry[i], sizeof(float), attn_s, fp);
+        fread(adam_m_qry[i], sizeof(float), attn_s, fp);
+        fread(adam_v_qry[i], sizeof(float), attn_s, fp);
+
+        fread(attn_key[i], sizeof(float), attn_s, fp);
+        fread(adam_m_key[i], sizeof(float), attn_s, fp);
+        fread(adam_v_key[i], sizeof(float), attn_s, fp);
+
+        fread(attn_val[i], sizeof(float), attn_s, fp);
+        fread(adam_m_val[i], sizeof(float), attn_s, fp);
+        fread(adam_v_val[i], sizeof(float), attn_s, fp);
+
+        fread(attn_out[i], sizeof(float), attn_s, fp);
+        fread(adam_m_out[i], sizeof(float), attn_s, fp);
+        fread(adam_v_out[i], sizeof(float), attn_s, fp);
+
+        fread(mlp_exp[i], sizeof(float), mlp_s, fp);
+        fread(adam_m_exp[i], sizeof(float), mlp_s, fp);
+        fread(adam_v_exp[i], sizeof(float), mlp_s, fp);
+
+        fread(mlp_con[i], sizeof(float), mlp_s, fp);
+        fread(adam_m_con[i], sizeof(float), mlp_s, fp);
+        fread(adam_v_con[i], sizeof(float), mlp_s, fp);
     }
 
+    fclose(fp);
     printf("Initialized Model with | %d | params\n", num_params);
-
 }
+
+// int main()
+// {
+
+//     load_model_binary("saved_model.bin");
+//     return 1;
+// }
