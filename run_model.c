@@ -92,7 +92,7 @@ void train(int warmup_steps, int training_steps)
     }
 }
 
-void inference(float temp)
+void post_trainging_inference(float temp)
 {
     for (int si = 0; si < 20; si++)
     {
@@ -129,6 +129,65 @@ void inference(float temp)
         memset(kv_keys, 0, sizeof(kv_keys));
         memset(kv_vals, 0, sizeof(kv_vals));
     }
+}
+
+
+void inference_from_word(char *word, float temp)
+{
+    char sample[CON_WINDOW + 1];
+    int slen = 0;
+    PosVals tmp_act;
+    float inv_t = 1.0f / temp;
+    float logits[MAX_CHARS + 1], probs[MAX_CHARS + 1];
+
+    int prompt[CON_WINDOW];
+    int plen = 0;
+    prompt[plen++] = BOS;
+
+    int wlen = (int)strlen(word);
+    for (int i = 0; i < wlen && plen < CON_WINDOW; i++)
+    {
+        int id = char_to_id(word[i]);
+        if (id < 0) // character not in vocab, skip it
+            continue;
+        prompt[plen++] = id;
+    }
+
+    // Feed the prompt through the model to prime the KV cache.
+    int pos = 0;
+    for (; pos < plen; pos++)
+    {
+        gpt_forward(prompt[pos], pos, logits, &tmp_act);
+    }
+
+    // Continue writing from where it left off.
+    printf("%s", word);
+
+    for (; pos < CON_WINDOW; pos++)
+    {
+        for (int i = 0; i < vocab_size; i++)
+        {
+            logits[i] *= inv_t;
+        }
+
+        softmax_fwd(logits, vocab_size, probs);
+        int token_id = weighted_choice(probs, vocab_size);
+
+        if (token_id == BOS)
+            break;
+        if (token_id < num_uchars)
+        {
+            sample[slen++] = uniq_char_arr[token_id];
+        }
+
+        gpt_forward(token_id, pos, logits, &tmp_act);
+    }
+
+    sample[slen] = '\0';
+    printf("%s\n", sample);
+
+    memset(kv_keys, 0, sizeof(kv_keys));
+    memset(kv_vals, 0, sizeof(kv_vals));
 }
 
 void free_params(void)
@@ -227,7 +286,7 @@ int run(char *training_data, int training_steps, int warmup_steps,  float temper
 
     printf("=================================\n");
     printf("Inference:\n");
-    inference(temperature);
+    post_trainging_inference(temperature);
 
     if (model_save_path)
     {
@@ -240,16 +299,77 @@ int run(char *training_data, int training_steps, int warmup_steps,  float temper
     return 0;
 }
 
+void inference(float temp, char *input_file, char *saved_model_bin, char *sentence)
+{
+    assert(saved_model_bin);
+    assert(input_file);
+    setvbuf(stdout, NULL, _IONBF, 0);
+
+    if (fopen(input_file, "r"))
+    {
+        load_data(input_file);
+    }
+    else
+    {
+        printf("Error loading traing data");
+        return;
+    }
+
+    int *doc_order = (int *)malloc(curr_doc_count * sizeof(int));
+
+    for (int i = 0; i < curr_doc_count; i++)
+    {
+        doc_order[i] = i;
+    }
+    shuffle_ints(doc_order, curr_doc_count);
+
+    char (*docs_tmp)[MAX_DOC_LEN] = malloc((size_t)curr_doc_count * MAX_DOC_LEN);
+    for (int i = 0; i < curr_doc_count; i++)
+    {
+        memcpy(docs_tmp[i], docs[doc_order[i]], MAX_DOC_LEN);
+    }
+    memcpy(docs, docs_tmp, (size_t)curr_doc_count * MAX_DOC_LEN);
+    free(docs_tmp);
+    free(doc_order);
+
+    printf("Number of Docs: %d\n", curr_doc_count);
+
+    build_tokenizer();
+    printf("=================================\n");
+    printf("Vocab Size: %d\n", vocab_size);
+
+    if (!saved_model_bin)
+        init_params();
+    else
+    {    
+        load_model_binary(saved_model_bin);
+        printf("Loaded Model from %s\n", saved_model_bin);
+    }
+
+    train(0, 0);
+
+    printf("=================================\n");
+    printf("Inference:\n");
+    inference_from_word(sentence, temp);
+
+
+    free_params();
+}
+
 int main()
 {
     char *input = "input.txt";
-    char *save_path = "saved_model.bin";
-    char *saved_model_binary = NULL;
+    char *save_path = "";
+    char *saved_model_binary = "saved_model.bin";
     int warmup = 500;
     int steps = 100000;
     float temp = 0.6f;
 
+    char *phrase = "We are accounted ";
+    printf("Input Phrase: %s\n", phrase);
+    printf("=================================\n");
+    
+    inference(temp, input, saved_model_binary, phrase);
 
-    run(input, steps, warmup, temp, save_path, saved_model_binary);
-    return 0;
+    //run(input, steps, warmup, temp, save_path, saved_model_binary);    return 0;
 }

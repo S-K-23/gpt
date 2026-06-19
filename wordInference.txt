@@ -1,0 +1,11 @@
+Input Phrase: We are accounted 
+=================================
+Number of Docs: 32777
+=================================
+Vocab Size: 65
+Loaded Token, Position, and LM Head
+Initialized Model with | 18924032 | params
+Loaded Model from saved_model.bin
+=================================
+Inference:
+We are accounted to the king the leaved hind.
